@@ -1,0 +1,44 @@
+---
+- name: Playbook that sends HTTP GET to target URI
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    # define NHL API
+    urltolookup: "https://statsapi.web.nhl.com/api/v1/teams"
+
+  tasks:
+  - name: Lookup API with uri module
+    ansible.builtin.uri:
+      url: "{{ urltolookup }}"
+      method: GET
+    register: results    # save the JSON sent back by our script
+
+  - name: Print out the keys within the returned JSON
+    ansible.builtin.debug:
+      var: results.get('json').keys()
+
+  - name: stop the playbook until enter is pressed
+    pause:
+
+  - name: display team record 0 info
+    ansible.builtin.debug:
+      var: results.get('json').get('teams')[0].teamName
+
+  - name: extract all the team names
+    ansible.builtin.debug:
+      var: item.teamName
+    loop: "{{ results.get('json').get('teams') }}"
+    loop_control:
+      label: "{{ item.teamName }}"
+
+  # ansible is not for printing to the screen
+  # it is for modifying state
+  - name: create a file and ensure a line exists with lineinfile
+    ansible.builtin.lineinfile:
+      path: teamNames.txt
+      line: "{{ item.teamName }}"
+      create: yes
+      insertafter: EOF
+    loop: "{{ results.get('json').get('teams') }}"

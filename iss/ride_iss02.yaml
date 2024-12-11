@@ -1,0 +1,16 @@
+---
+- name: Perform HTTP lookup from Citybik.es API
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Perform HTTP GET request
+      uri:
+        url: http://api.citybik.es/v2/networks
+        method: GET
+        return_content: yes
+      register: http_response
+
+    - name: Display the HTTP response
+      debug:
+        var: http_response.json
+  
