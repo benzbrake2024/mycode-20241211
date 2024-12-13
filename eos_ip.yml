@@ -1,0 +1,25 @@
+---
+- name: Using EOS specific module to run commands
+  hosts: arista_switches
+  gather_facts: false
+  connection: network_cli    # required for ansible to use CLI over SSH 
+  become: yes                # run with privilege
+  become_method: enable      # use in place of "sudo"
+
+  vars:
+    ansible_ssh_pass: alta3
+      
+- name: Gather and display interface IP addresses
+  hosts: arista_switches
+  gather_facts: no
+  tasks:
+    - name: Gather EOS interface facts
+      arista.eos.eos_facts:
+        gather_subset: interfaces
+      register: eos_facts
+
+    - name: Display interface IP addresses
+      debug:
+        msg: "{{ item.value.interface_address.primary.ip }}"
+      loop: "{{ eos_facts.ansible_facts.eos_interfaces | dict2items }}"
+      when: item.value.interface_address is defined and item.value.interface_address.primary is defined
